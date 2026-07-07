@@ -179,15 +179,12 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
             _modeButton(
                 PdfAnnotationMode.squiggly, Icons.gesture, 'Gribouillis'),
             IconButton(
-              icon: const Icon(Icons.delete_sweep),
-              tooltip: "Supprimer l'annotation sélectionnée",
+              icon: const Icon(Icons.undo),
+              tooltip: 'Annuler la dernière annotation',
               onPressed: () {
-                final selected = _controller
-                    .getAnnotations()
-                    .where((a) => a.isSelected)
-                    .toList();
-                for (final a in selected) {
-                  _controller.removeAnnotation(a);
+                final annotations = _controller.getAnnotations();
+                if (annotations.isNotEmpty) {
+                  _controller.removeAnnotation(annotations.last);
                 }
               },
             ),
