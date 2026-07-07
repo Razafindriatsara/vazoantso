@@ -31,7 +31,7 @@ jobs:
         run: flutter pub get
 
       - name: Icônes (PWA incluse)
-        run: dart run flutter_launcher_icons
+        run: dart run flutter_launcher_icons -f flutter_launcher_icons-web.yaml
 
       - name: Compiler la version web
         run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
