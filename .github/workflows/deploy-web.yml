@@ -1,9 +1,9 @@
 name: Déployer la version Web (GitHub Pages)
 
 on:
-  workflow_dispatch:        # lancement manuel
+  workflow_dispatch:
   push:
-    branches: [main]        # à chaque mise à jour de main
+    branches: [main]
 
 permissions:
   contents: read
@@ -27,10 +27,16 @@ jobs:
       - name: Générer les dossiers de plateforme
         run: flutter create . --org com.vazoantso --project-name vazoantso --platforms web
 
+      - name: Ajouter PdfJS (requis par le visualiseur PDF sur web)
+        run: |
+          sed -i 's|</head>|  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.min.js"></script>\n  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.min.js";</script>\n</head>|' web/index.html
+          sed -i 's|"name": "vazoantso"|"name": "VazoAntso"|; s|"short_name": "vazoantso"|"short_name": "VazoAntso"|' web/manifest.json
+          sed -i 's|<title>vazoantso</title>|<title>VazoAntso</title>|' web/index.html
+
       - name: Dépendances
         run: flutter pub get
 
-      - name: Icônes (PWA incluse)
+      - name: Icônes (PWA)
         run: dart run flutter_launcher_icons -f flutter_launcher_icons-web.yaml
 
       - name: Compiler la version web
