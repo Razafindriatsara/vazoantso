@@ -1,0 +1,44 @@
+name: vazoantso
+description: "VazoAntso - Bibliothèque de chansons (lyrics PDF, instrumentaux et voix)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  file_picker: ^8.1.2
+  just_audio: ^0.9.40
+  syncfusion_flutter_pdfviewer: ^27.1.48
+  syncfusion_flutter_pdf: ^27.1.48
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#FFFFFF"
+    theme_color: "#6A4CBC"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/

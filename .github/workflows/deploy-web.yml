@@ -1,0 +1,53 @@
+name: Déployer la version Web (GitHub Pages)
+
+on:
+  workflow_dispatch:        # lancement manuel
+  push:
+    branches: [main]        # à chaque mise à jour de main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Générer les dossiers de plateforme
+        run: flutter create . --org com.vazoantso --project-name vazoantso --platforms web
+
+      - name: Dépendances
+        run: flutter pub get
+
+      - name: Icônes (PWA incluse)
+        run: dart run flutter_launcher_icons
+
+      - name: Compiler la version web
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
