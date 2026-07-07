@@ -72,17 +72,43 @@ class _FolderScreenState extends State<FolderScreen> {
   Future<void> _import(SongSlot slot) async {
     final isLyrics = slot == SongSlot.lyrics;
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: isLyrics ? ['pdf'] : [..._audioExts, 'pdf'],
+      type: FileType.any,
       withData: true,
     );
     final file = result?.files.single;
     if (file == null || file.bytes == null) return;
+    final ext = p.extension(file.name).toLowerCase().replaceFirst('.', '');
+    final allowed = isLyrics ? ['pdf'] : [..._audioExts, 'pdf'];
+    if (!allowed.contains(ext)) {
+      _showError(
+          'Format non pris en charge (.$ext). Formats acceptés : ${allowed.join(', ')}.');
+      return;
+    }
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Expanded(child: Text('Envoi en cours…')),
+          ],
+        ),
+      ),
+    );
     try {
       await StorageService.instance
           .importFile(_folder, slot, file.name, file.bytes!);
+      if (!mounted) return;
+      Navigator.pop(context);
       _reload();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Fichier ajouté.')));
     } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
       _showError(e);
     }
   }
