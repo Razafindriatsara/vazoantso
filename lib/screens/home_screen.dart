@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     SongStage.vinavina: Color(0xFFF59E0B),
     SongStage.voaboatra: Color(0xFF3B82F6),
     SongStage.manamasaka: Color(0xFF22C55E),
+    SongStage.hiravavaka: Color(0xFF8B5CF6),
   };
 
   Color get _color => _stageColors[_stage]!;

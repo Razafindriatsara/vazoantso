@@ -18,7 +18,8 @@ enum SongSlot {
 enum SongStage {
   vinavina('vinavina', 'Vinavina', 'Suggestions'),
   voaboatra('voaboatra', 'Voaboatra', 'À retravailler'),
-  manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter');
+  manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter'),
+  hiravavaka('hiravavaka', 'Hiravavaka', 'Culte');
 
   const SongStage(this.id, this.label, this.description);
 
@@ -30,7 +31,8 @@ enum SongStage {
   SongStage? get next => switch (this) {
         vinavina => voaboatra,
         voaboatra => manamasaka,
-        manamasaka => null,
+        manamasaka => hiravavaka,
+        hiravavaka => null,
       };
 
   static SongStage fromId(String? id) =>
