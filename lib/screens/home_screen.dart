@@ -239,26 +239,41 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
-            child: Row(
+            child: Column(
               children: [
-                for (final stage in const [
-                  SongStage.vinavina,
-                  SongStage.voaboatra,
-                  SongStage.manamasaka,
-                ])
-                  _mainButton(
-                    label: stage.label,
-                    description: stage.description,
-                    color: _stageColors[stage]!,
-                    selected: _stage == stage,
-                    onTap: () => _selectStage(stage),
-                  ),
-                _mainButton(
-                  label: 'Playliste',
-                  description: 'Hiravavaka · Alahamohamo',
-                  color: _playlistColor,
-                  selected: _inPlaylist,
-                  onTap: () => _selectStage(SongStage.hiravavaka),
+                Row(
+                  children: [
+                    for (final stage in const [
+                      SongStage.vinavina,
+                      SongStage.voaboatra,
+                    ])
+                      _mainButton(
+                        label: stage.label,
+                        description: stage.description,
+                        color: _stageColors[stage]!,
+                        selected: _stage == stage,
+                        onTap: () => _selectStage(stage),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _mainButton(
+                      label: SongStage.manamasaka.label,
+                      description: SongStage.manamasaka.description,
+                      color: _stageColors[SongStage.manamasaka]!,
+                      selected: _stage == SongStage.manamasaka,
+                      onTap: () => _selectStage(SongStage.manamasaka),
+                    ),
+                    _mainButton(
+                      label: 'Playliste',
+                      description: 'Hiravavaka · Alahamohamo',
+                      color: _playlistColor,
+                      selected: _inPlaylist,
+                      onTap: () => _selectStage(SongStage.hiravavaka),
+                    ),
+                  ],
                 ),
               ],
             ),
