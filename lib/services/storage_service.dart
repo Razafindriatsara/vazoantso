@@ -27,7 +27,11 @@ class StorageService {
 
   SongFolder _fromData(String title, Map<String, dynamic>? data) {
     final files = Map<String, String>.from((data?['files'] as Map?) ?? {});
-    final folder = SongFolder(title: title, files: files);
+    final folder = SongFolder(
+      title: title,
+      files: files,
+      stage: SongStage.fromId(data?['stage'] as String?),
+    );
     _cache[title] = folder;
     return folder;
   }
@@ -40,25 +44,39 @@ class StorageService {
     return doc.data() ?? {};
   }
 
-  Future<List<SongFolder>> listFolders({String query = ''}) async {
+  Future<List<SongFolder>> listFolders(
+      {String query = '', SongStage? stage}) async {
     final snap = await _folders.get();
     final q = query.trim().toLowerCase();
     final list = snap.docs
         .map((d) => _fromData(d.id, d.data()))
         .where((f) => q.isEmpty || f.title.toLowerCase().contains(q))
+        .where((f) => stage == null || f.stage == stage)
         .toList()
       ..sort(
           (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     return list;
   }
 
-  Future<SongFolder> createFolder(String title) async {
+  Future<SongFolder> createFolder(String title,
+      {SongStage stage = SongStage.vinavina}) async {
     final clean = sanitize(title);
     if (clean.isEmpty) throw StateError('Titre vide.');
     final doc = await _folders.doc(clean).get();
     if (doc.exists) throw StateError('Un dossier « $clean » existe déjà.');
-    await _folders.doc(clean).set({'files': {}, 'chunks': {}});
-    return _fromData(clean, {'files': {}});
+    await _folders
+        .doc(clean)
+        .set({'files': {}, 'chunks': {}, 'stage': stage.id});
+    return _fromData(clean, {'files': {}, 'stage': stage.id});
+  }
+
+  /// Change l'étape d'un chant (vinavina -> voaboatra -> manamasaka).
+  Future<SongFolder> moveToStage(SongFolder folder, SongStage stage) async {
+    await _folders
+        .doc(folder.title)
+        .set({'stage': stage.id}, SetOptions(merge: true));
+    final data = await _folderData(folder.title);
+    return _fromData(folder.title, data);
   }
 
   Future<void> _deleteChunks(String title, String suffix, int count) async {
@@ -107,10 +125,14 @@ class StorageService {
       }
       await _deleteChunks(folder.title, suffix, n);
     }
-    await _folders.doc(clean).set({'files': newFiles, 'chunks': chunks});
+    await _folders.doc(clean).set({
+      'files': newFiles,
+      'chunks': chunks,
+      'stage': (data['stage'] as String?) ?? folder.stage.id,
+    });
     await _folders.doc(folder.title).delete();
     _cache.remove(folder.title);
-    return _fromData(clean, {'files': newFiles});
+    return _fromData(clean, {'files': newFiles, 'stage': data['stage']});
   }
 
   /// Importe un fichier dans un emplacement. Remplace l'existant.
@@ -179,7 +201,11 @@ class StorageService {
     await _deleteChunks(folder.title, slot.suffix, n);
     files.remove(slot.suffix);
     chunks.remove(slot.suffix);
-    await _folders.doc(folder.title).set({'files': files, 'chunks': chunks});
-    return _fromData(folder.title, {'files': files, 'chunks': chunks});
+    final stage = (data['stage'] as String?) ?? folder.stage.id;
+    await _folders
+        .doc(folder.title)
+        .set({'files': files, 'chunks': chunks, 'stage': stage});
+    return _fromData(
+        folder.title, {'files': files, 'chunks': chunks, 'stage': stage});
   }
 }

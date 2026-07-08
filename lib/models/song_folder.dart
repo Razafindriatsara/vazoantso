@@ -10,18 +10,43 @@ enum SongSlot {
 
   const SongSlot(this.suffix, this.label);
 
-  /// Suffixe utilisé dans le nom de fichier : `<titre>_<suffix>.<ext>`.
   final String suffix;
   final String label;
 }
 
-/// Un dossier de chanson : un titre + jusqu'à 7 fichiers nommés
-/// `<titre>_lyrics.pdf`, `<titre>_instrum.mp3`, etc.
-/// Fonctionne sur iOS, Android et le web (stockage Hive).
+/// Les 3 étapes de préparation d'un chant.
+enum SongStage {
+  vinavina('vinavina', 'Vinavina', 'Suggestions'),
+  voaboatra('voaboatra', 'Voaboatra', 'À retravailler'),
+  manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter');
+
+  const SongStage(this.id, this.label, this.description);
+
+  final String id;
+  final String label;
+  final String description;
+
+  /// Étape suivante (null pour la dernière).
+  SongStage? get next => switch (this) {
+        vinavina => voaboatra,
+        voaboatra => manamasaka,
+        manamasaka => null,
+      };
+
+  static SongStage fromId(String? id) =>
+      values.where((s) => s.id == id).firstOrNull ?? vinavina;
+}
+
+/// Un dossier de chanson : un titre + jusqu'à 7 fichiers.
 class SongFolder {
-  const SongFolder({required this.title, required this.files});
+  const SongFolder({
+    required this.title,
+    required this.files,
+    this.stage = SongStage.vinavina,
+  });
 
   final String title;
+  final SongStage stage;
 
   /// suffixe de l'emplacement -> nom de fichier affiché.
   final Map<String, String> files;
@@ -30,7 +55,6 @@ class SongFolder {
 
   bool hasFile(SongSlot slot) => files.containsKey(slot.suffix);
 
-  /// Nombre de fichiers présents (sur 7).
   int get filledSlots =>
       SongSlot.values.where((s) => files.containsKey(s.suffix)).length;
 }
