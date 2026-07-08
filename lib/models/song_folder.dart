@@ -14,12 +14,15 @@ enum SongSlot {
   final String label;
 }
 
-/// Les 3 étapes de préparation d'un chant.
+/// Les étapes de préparation d'un chant.
+/// Les deux dernières (hiravavaka, alahamohamo) sont les sous-catégories
+/// de la Playliste.
 enum SongStage {
   vinavina('vinavina', 'Vinavina', 'Suggestions'),
   voaboatra('voaboatra', 'Voaboatra', 'À retravailler'),
   manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter'),
-  hiravavaka('hiravavaka', 'Hiravavaka', 'Culte');
+  hiravavaka('hiravavaka', 'Hiravavaka', 'Playliste'),
+  alahamohamo('alahamohamo', 'Alahamohamo', 'Playliste');
 
   const SongStage(this.id, this.label, this.description);
 
@@ -27,12 +30,15 @@ enum SongStage {
   final String label;
   final String description;
 
-  /// Étape suivante (null pour la dernière).
-  SongStage? get next => switch (this) {
-        vinavina => voaboatra,
-        voaboatra => manamasaka,
-        manamasaka => hiravavaka,
-        hiravavaka => null,
+  /// Fait partie de la Playliste ?
+  bool get isPlaylist => this == hiravavaka || this == alahamohamo;
+
+  /// Destinations de transfert possibles depuis cette étape.
+  List<SongStage> get nextOptions => switch (this) {
+        vinavina => const [SongStage.voaboatra],
+        voaboatra => const [SongStage.manamasaka],
+        manamasaka => const [SongStage.hiravavaka, SongStage.alahamohamo],
+        _ => const [],
       };
 
   static SongStage fromId(String? id) =>

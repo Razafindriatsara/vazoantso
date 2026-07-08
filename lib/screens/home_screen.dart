@@ -4,8 +4,8 @@ import '../models/song_folder.dart';
 import '../services/storage_service.dart';
 import 'folder_screen.dart';
 
-/// Écran d'accueil : 3 catégories (Vinavina, Voaboatra, Manamasaka),
-/// liste des chants, recherche, ajout, transfert et suppression.
+/// Écran d'accueil : catégories Vinavina, Voaboatra, Manamasaka et
+/// Playliste (sous-catégories Hiravavaka / Alahamohamo).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -24,9 +24,13 @@ class _HomeScreenState extends State<HomeScreen> {
     SongStage.voaboatra: Color(0xFF3B82F6),
     SongStage.manamasaka: Color(0xFF22C55E),
     SongStage.hiravavaka: Color(0xFF8B5CF6),
+    SongStage.alahamohamo: Color(0xFFEC4899),
   };
 
+  static const Color _playlistColor = Color(0xFF8B5CF6);
+
   Color get _color => _stageColors[_stage]!;
+  bool get _inPlaylist => _stage.isPlaylist;
 
   @override
   void initState() {
@@ -38,6 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _selectStage(SongStage stage) {
+    setState(() {
+      _stage = stage;
+      _loading = true;
+    });
+    _refresh();
   }
 
   Future<void> _refresh() async {
@@ -94,16 +106,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _move(SongFolder folder) async {
-    final next = folder.stage.next;
-    if (next == null) return;
+  Future<void> _move(SongFolder folder, SongStage target) async {
     try {
-      await StorageService.instance.moveToStage(folder, next);
+      await StorageService.instance.moveToStage(folder, target);
       await _refresh();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('« ${folder.title} » transféré vers ${next.label}.'),
-        backgroundColor: _stageColors[next],
+        content: Text('« ${folder.title} » transféré vers ${target.label}.'),
+        backgroundColor: _stageColors[target],
       ));
     } catch (e) {
       _showError(e);
@@ -139,22 +149,20 @@ class _HomeScreenState extends State<HomeScreen> {
         .showSnackBar(SnackBar(content: Text(e.toString())));
   }
 
-  Widget _stageButton(SongStage stage) {
-    final color = _stageColors[stage]!;
-    final selected = _stage == stage;
+  Widget _mainButton({
+    required String label,
+    required String description,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _stage = stage;
-            _loading = true;
-          });
-          _refresh();
-        },
+        onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
           transform: selected
               ? Matrix4.translationValues(0, -3, 0)
               : Matrix4.identity(),
@@ -184,25 +192,31 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Column(
             children: [
-              Text(
-                stage.label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  shadows: [
-                    Shadow(
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
-                        color: Colors.black38),
-                  ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    shadows: [
+                      Shadow(
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                          color: Colors.black38),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                stage.description,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 10),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 9),
+                ),
               ),
             ],
           ),
@@ -222,13 +236,59 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
             child: Row(
               children: [
-                for (final stage in SongStage.values) _stageButton(stage),
+                for (final stage in const [
+                  SongStage.vinavina,
+                  SongStage.voaboatra,
+                  SongStage.manamasaka,
+                ])
+                  _mainButton(
+                    label: stage.label,
+                    description: stage.description,
+                    color: _stageColors[stage]!,
+                    selected: _stage == stage,
+                    onTap: () => _selectStage(stage),
+                  ),
+                _mainButton(
+                  label: 'Playliste',
+                  description: 'Hiravavaka · Alahamohamo',
+                  color: _playlistColor,
+                  selected: _inPlaylist,
+                  onTap: () => _selectStage(SongStage.hiravavaka),
+                ),
               ],
             ),
           ),
+          if (_inPlaylist)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  for (final sub in const [
+                    SongStage.hiravavaka,
+                    SongStage.alahamohamo,
+                  ])
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: ChoiceChip(
+                          label: SizedBox(
+                            width: double.infinity,
+                            child: Text(sub.label,
+                                textAlign: TextAlign.center),
+                          ),
+                          selected: _stage == sub,
+                          selectedColor:
+                              _stageColors[sub]!.withOpacity(.25),
+                          onSelected: (_) => _selectStage(sub),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: SearchBar(
@@ -274,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemCount: _folders.length,
                           itemBuilder: (context, i) {
                             final folder = _folders[i];
-                            final next = folder.stage.next;
                             return ListTile(
                               leading: CircleAvatar(
                                 backgroundColor: _color.withOpacity(.15),
@@ -285,22 +344,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Text('${folder.filledSlots}/7 fichiers'),
                               trailing: PopupMenuButton<String>(
                                 onSelected: (action) {
-                                  switch (action) {
-                                    case 'move':
-                                      _move(folder);
-                                    case 'delete':
-                                      _deleteFolder(folder);
+                                  if (action.startsWith('move:')) {
+                                    _move(
+                                        folder,
+                                        SongStage.fromId(
+                                            action.substring(5)));
+                                  } else if (action == 'delete') {
+                                    _deleteFolder(folder);
                                   }
                                 },
                                 itemBuilder: (context) => [
-                                  if (next != null)
+                                  for (final target
+                                      in folder.stage.nextOptions)
                                     PopupMenuItem(
-                                      value: 'move',
+                                      value: 'move:${target.id}',
                                       child: ListTile(
                                         leading: Icon(Icons.arrow_forward,
-                                            color: _stageColors[next]),
+                                            color: _stageColors[target]),
                                         title: Text(
-                                            'Transférer vers ${next.label}'),
+                                            'Transférer vers ${target.label}'),
                                       ),
                                     ),
                                   const PopupMenuItem(
