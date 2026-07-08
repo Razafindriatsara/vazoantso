@@ -209,15 +209,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 9),
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    description,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 9),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -263,28 +265,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (_inPlaylist)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 12),
               child: Row(
                 children: [
                   for (final sub in const [
                     SongStage.hiravavaka,
                     SongStage.alahamohamo,
                   ])
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: ChoiceChip(
-                          label: SizedBox(
-                            width: double.infinity,
-                            child: Text(sub.label,
-                                textAlign: TextAlign.center),
-                          ),
-                          selected: _stage == sub,
-                          selectedColor:
-                              _stageColors[sub]!.withOpacity(.25),
-                          onSelected: (_) => _selectStage(sub),
-                        ),
-                      ),
+                    _mainButton(
+                      label: sub.label,
+                      description: '',
+                      color: _stageColors[sub]!,
+                      selected: _stage == sub,
+                      onTap: () => _selectStage(sub),
                     ),
                 ],
               ),
