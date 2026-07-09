@@ -27,12 +27,8 @@ jobs:
       - name: Générer les dossiers de plateforme
         run: flutter create . --org com.vazoantso --project-name vazoantso --platforms web
 
-      - name: Ajouter PdfJS (requis par le visualiseur PDF sur web)
-        run: |
-          sed -i 's|</body>|<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script><script type="text/javascript">pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js";</script></body>|' web/index.html
-          sed -i 's|"name": "vazoantso"|"name": "VazoAntso"|; s|"short_name": "vazoantso"|"short_name": "VazoAntso"|' web/manifest.json
-          sed -i 's|<title>vazoantso</title>|<title>VazoAntso</title>|' web/index.html
-          grep -c "pdf.min.js" web/index.html
+      - name: Vérifier la page personnalisée (PdfJS + bouton Installer)
+        run: grep -c "pdf.min.js" web/index.html && grep -c "vz-install-btn" web/index.html
 
       - name: Dépendances
         run: flutter pub get

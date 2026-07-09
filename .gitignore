@@ -7,13 +7,15 @@ build/
 pubspec.lock
 
 # Plateformes générées par `flutter create .`
-# (le workflow GitHub les régénère, inutile de les versionner)
 android/
 ios/
 linux/
 macos/
 windows/
-web/
+# web/ : seuls index.html et manifest.json sont versionnés
+web/*
+!web/index.html
+!web/manifest.json
 
 # IDE
 .idea/

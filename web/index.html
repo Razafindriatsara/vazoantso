@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="VazoAntso - Bibliothèque de chants de chorale">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="VazoAntso">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>VazoAntso</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    #vz-install-btn {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; display: none; align-items: center; gap: 10px;
+      background: linear-gradient(180deg, #a78bfa, #8b5cf6 55%, #6d28d9);
+      color: #fff; border: none; border-radius: 26px;
+      padding: 13px 22px; font-size: 16px; font-weight: bold;
+      font-family: -apple-system, sans-serif;
+      box-shadow: 0 6px 16px rgba(76, 29, 149, .55);
+    }
+    #vz-install-close {
+      background: rgba(255,255,255,.25); border: none; color: #fff;
+      border-radius: 50%; width: 24px; height: 24px; font-size: 13px;
+      line-height: 24px; padding: 0;
+    }
+    #vz-ios-guide {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 10000;
+      display: none; align-items: center; justify-content: center;
+      font-family: -apple-system, sans-serif;
+    }
+    #vz-ios-guide .vz-card {
+      background: #fff; border-radius: 18px; padding: 24px;
+      max-width: 320px; margin: 16px; color: #222; font-size: 16px;
+    }
+    #vz-ios-guide h3 { margin-top: 0; color: #6d28d9; }
+    #vz-ios-guide .vz-ok {
+      margin-top: 12px; width: 100%; background: #8b5cf6; color: #fff;
+      border: none; border-radius: 12px; padding: 12px; font-size: 16px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <script type="text/javascript">
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js";
+  </script>
+
+  <button id="vz-install-btn">
+    <span>&#128241; Installer l'application</span>
+    <span id="vz-install-close">&#10005;</span>
+  </button>
+
+  <div id="vz-ios-guide">
+    <div class="vz-card">
+      <h3>Installer VazoAntso</h3>
+      <p>1. Touchez le bouton <b>Partager</b> (le carré avec une fl&egrave;che) en bas de Safari.</p>
+      <p>2. Faites d&eacute;filer et choisissez <b>&laquo; Sur l'&eacute;cran d'accueil &raquo;</b>.</p>
+      <p>3. Touchez <b>Ajouter</b> : l'ic&ocirc;ne appara&icirc;t sur votre &eacute;cran d'accueil.</p>
+      <button class="vz-ok" onclick="document.getElementById('vz-ios-guide').style.display='none'">Compris&nbsp;!</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('vz-install-btn');
+      var closeBtn = document.getElementById('vz-install-close');
+      var standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+      if (standalone) return;
+      try { if (localStorage.getItem('vz-install-hidden')) return; } catch (e) {}
+
+      var deferredPrompt = null;
+      var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        btn.style.display = 'flex';
+      });
+      if (isIos) btn.style.display = 'flex';
+
+      btn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () {
+            btn.style.display = 'none';
+            deferredPrompt = null;
+          });
+        } else if (isIos) {
+          document.getElementById('vz-ios-guide').style.display = 'flex';
+        }
+      });
+
+      closeBtn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        btn.style.display = 'none';
+        try { localStorage.setItem('vz-install-hidden', '1'); } catch (e) {}
+      });
+
+      window.addEventListener('appinstalled', function () {
+        btn.style.display = 'none';
+      });
+    })();
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
