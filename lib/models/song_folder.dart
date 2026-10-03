@@ -15,15 +15,16 @@ enum SongSlot {
 }
 
 /// Les étapes de préparation d'un chant.
-/// Les deux dernières (hiravavaka, alahamohamo) sont les sous-catégories
-/// de la Playliste.
+/// hiravavaka et alahamohamo sont les sous-catégories de la Playliste,
+/// alitara et lapihazo celles de Sehosehatra.
 enum SongStage {
   vinavina('vinavina', 'Vinavina', 'Suggestions'),
   voaboatra('voaboatra', 'Voaboatra', 'À retravailler'),
   manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter'),
   hiravavaka('hiravavaka', 'Hiravavaka', 'Playliste'),
   alahamohamo('alahamohamo', 'Alahamohamo', 'Playliste'),
-  sehosehatra('sehosehatra', 'Sehosehatra', 'Depuis la Playliste');
+  alitara('alitara', 'Alitara', 'Sehosehatra'),
+  lapihazo('lapihazo', 'Lapihazo', 'Sehosehatra');
 
   const SongStage(this.id, this.label, this.description);
 
@@ -34,17 +35,22 @@ enum SongStage {
   /// Fait partie de la Playliste ?
   bool get isPlaylist => this == hiravavaka || this == alahamohamo;
 
+  /// Fait partie de Sehosehatra ?
+  bool get isSehosehatra => this == alitara || this == lapihazo;
+
   /// Destinations de transfert possibles depuis cette étape.
   List<SongStage> get nextOptions => switch (this) {
         vinavina => const [SongStage.voaboatra],
         voaboatra => const [SongStage.manamasaka],
         manamasaka => const [SongStage.hiravavaka, SongStage.alahamohamo],
-        hiravavaka || alahamohamo => const [SongStage.sehosehatra],
+        hiravavaka || alahamohamo => const [SongStage.alitara, SongStage.lapihazo],
         _ => const [],
       };
 
+  /// « sehosehatra » est l'ancien identifiant (avant Alitara / Lapihazo).
   static SongStage fromId(String? id) =>
-      values.where((s) => s.id == id).firstOrNull ?? vinavina;
+      values.where((s) => s.id == id).firstOrNull ??
+      (id == 'sehosehatra' ? alitara : vinavina);
 }
 
 /// Un dossier de chanson : un titre + jusqu'à 7 fichiers.

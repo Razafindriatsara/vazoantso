@@ -6,7 +6,7 @@ import 'folder_screen.dart';
 
 /// Écran d'accueil : catégories Vinavina, Voaboatra, Manamasaka et
 /// Playliste (sous-catégories Hiravavaka / Alahamohamo) et Sehosehatra
-/// (chants transférés depuis la Playliste).
+/// (sous-catégories Alitara / Lapihazo, chants transférés depuis la Playliste).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,13 +26,17 @@ class _HomeScreenState extends State<HomeScreen> {
     SongStage.manamasaka: Color(0xFF22C55E),
     SongStage.hiravavaka: Color(0xFF8B5CF6),
     SongStage.alahamohamo: Color(0xFFEC4899),
-    SongStage.sehosehatra: Color(0xFF14B8A6),
+    SongStage.alitara: Color(0xFF06B6D4),
+    SongStage.lapihazo: Color(0xFF84CC16),
   };
+
+  static const Color _sehosehatraColor = Color(0xFF14B8A6);
 
   static const Color _playlistColor = Color(0xFF8B5CF6);
 
   Color get _color => _stageColors[_stage]!;
   bool get _inPlaylist => _stage.isPlaylist;
+  bool get _inSehosehatra => _stage.isSehosehatra;
 
   @override
   void initState() {
@@ -283,11 +287,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       _mainButton(
-                        label: SongStage.sehosehatra.label,
-                        description: SongStage.sehosehatra.description,
-                        color: _stageColors[SongStage.sehosehatra]!,
-                        selected: _stage == SongStage.sehosehatra,
-                        onTap: () => _selectStage(SongStage.sehosehatra),
+                        label: 'Sehosehatra',
+                        description: 'Alitara · Lapihazo',
+                        color: _sehosehatraColor,
+                        selected: _inSehosehatra,
+                        onTap: () => _selectStage(SongStage.alitara),
                       ),
                     ],
                   ),
@@ -295,15 +299,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (_inPlaylist)
+          if (_inPlaylist || _inSehosehatra)
             Padding(
               padding: const EdgeInsets.fromLTRB(28, 0, 28, 12),
               child: Row(
                 children: [
-                  for (final sub in const [
-                    SongStage.hiravavaka,
-                    SongStage.alahamohamo,
-                  ])
+                  for (final sub in _inPlaylist
+                      ? const [SongStage.hiravavaka, SongStage.alahamohamo]
+                      : const [SongStage.alitara, SongStage.lapihazo])
                     _mainButton(
                       label: sub.label,
                       description: '',
