@@ -5,7 +5,8 @@ import '../services/storage_service.dart';
 import 'folder_screen.dart';
 
 /// Écran d'accueil : catégories Vinavina, Voaboatra, Manamasaka et
-/// Playliste (sous-catégories Hiravavaka / Alahamohamo).
+/// Playliste (sous-catégories Hiravavaka / Alahamohamo) et Sehosehatra
+/// (chants transférés depuis la Playliste).
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     SongStage.manamasaka: Color(0xFF22C55E),
     SongStage.hiravavaka: Color(0xFF8B5CF6),
     SongStage.alahamohamo: Color(0xFFEC4899),
+    SongStage.sehosehatra: Color(0xFF14B8A6),
   };
 
   static const Color _playlistColor = Color(0xFF8B5CF6);
@@ -274,6 +276,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () => _selectStage(SongStage.hiravavaka),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                FractionallySizedBox(
+                  widthFactor: .5,
+                  child: Row(
+                    children: [
+                      _mainButton(
+                        label: SongStage.sehosehatra.label,
+                        description: SongStage.sehosehatra.description,
+                        color: _stageColors[SongStage.sehosehatra]!,
+                        selected: _stage == SongStage.sehosehatra,
+                        onTap: () => _selectStage(SongStage.sehosehatra),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

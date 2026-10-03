@@ -22,7 +22,8 @@ enum SongStage {
   voaboatra('voaboatra', 'Voaboatra', 'À retravailler'),
   manamasaka('manamasaka', 'Manamasaka', 'Prêts à répéter'),
   hiravavaka('hiravavaka', 'Hiravavaka', 'Playliste'),
-  alahamohamo('alahamohamo', 'Alahamohamo', 'Playliste');
+  alahamohamo('alahamohamo', 'Alahamohamo', 'Playliste'),
+  sehosehatra('sehosehatra', 'Sehosehatra', 'Depuis la Playliste');
 
   const SongStage(this.id, this.label, this.description);
 
@@ -38,6 +39,7 @@ enum SongStage {
         vinavina => const [SongStage.voaboatra],
         voaboatra => const [SongStage.manamasaka],
         manamasaka => const [SongStage.hiravavaka, SongStage.alahamohamo],
+        hiravavaka || alahamohamo => const [SongStage.sehosehatra],
         _ => const [],
       };
 
