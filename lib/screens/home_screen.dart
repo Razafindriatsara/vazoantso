@@ -155,6 +155,87 @@ class _HomeScreenState extends State<HomeScreen> {
         .showSnackBar(SnackBar(content: Text(e.toString())));
   }
 
+  /// Ordre d'interprétation modifiable (Alitara / Lapihazo, hors recherche).
+  bool get _reorderable => _inSehosehatra && _searchController.text.isEmpty;
+
+  Future<void> _reorder(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final list = [..._folders];
+    list.insert(newIndex, list.removeAt(oldIndex));
+    setState(() => _folders = list);
+    try {
+      final saved = await StorageService.instance.saveOrder(list);
+      if (!mounted) return;
+      setState(() => _folders = saved);
+    } catch (e) {
+      _showError(e);
+      _refresh();
+    }
+  }
+
+  Widget _folderTile(SongFolder folder, int i) {
+    final menu = PopupMenuButton<String>(
+      onSelected: (action) {
+        if (action.startsWith('move:')) {
+          _move(folder, SongStage.fromId(action.substring(5)));
+        } else if (action == 'delete') {
+          _deleteFolder(folder);
+        }
+      },
+      itemBuilder: (context) => [
+        for (final target in folder.stage.nextOptions)
+          PopupMenuItem(
+            value: 'move:${target.id}',
+            child: ListTile(
+              leading: Icon(Icons.arrow_forward, color: _stageColors[target]),
+              title: Text('Transférer vers ${target.label}'),
+            ),
+          ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: ListTile(
+            leading: Icon(Icons.delete_outline),
+            title: Text('Supprimer'),
+          ),
+        ),
+      ],
+    );
+    return ListTile(
+      key: ValueKey(folder.title),
+      leading: CircleAvatar(
+        backgroundColor: _color.withOpacity(.15),
+        child: _inSehosehatra
+            ? Text('${folder.order ?? i + 1}',
+                style: TextStyle(color: _color, fontWeight: FontWeight.bold))
+            : Icon(Icons.folder, color: _color),
+      ),
+      title: Text(folder.title),
+      subtitle: Text('${folder.filledSlots}/7 fichiers'),
+      trailing: _reorderable
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ReorderableDragStartListener(
+                  index: i,
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.drag_handle),
+                  ),
+                ),
+                menu,
+              ],
+            )
+          : menu,
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => FolderScreen(folder: folder)),
+        );
+        _refresh();
+      },
+    );
+  }
+
   Widget _mainButton({
     required String label,
     required String description,
@@ -358,63 +439,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     : RefreshIndicator(
                         onRefresh: _refresh,
-                        child: ListView.builder(
-                          itemCount: _folders.length,
-                          itemBuilder: (context, i) {
-                            final folder = _folders[i];
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: _color.withOpacity(.15),
-                                child: Icon(Icons.folder, color: _color),
+                        child: _reorderable
+                            ? ReorderableListView.builder(
+                                buildDefaultDragHandles: false,
+                                itemCount: _folders.length,
+                                onReorder: _reorder,
+                                itemBuilder: (context, i) =>
+                                    _folderTile(_folders[i], i),
+                              )
+                            : ListView.builder(
+                                itemCount: _folders.length,
+                                itemBuilder: (context, i) =>
+                                    _folderTile(_folders[i], i),
                               ),
-                              title: Text(folder.title),
-                              subtitle:
-                                  Text('${folder.filledSlots}/7 fichiers'),
-                              trailing: PopupMenuButton<String>(
-                                onSelected: (action) {
-                                  if (action.startsWith('move:')) {
-                                    _move(
-                                        folder,
-                                        SongStage.fromId(
-                                            action.substring(5)));
-                                  } else if (action == 'delete') {
-                                    _deleteFolder(folder);
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  for (final target
-                                      in folder.stage.nextOptions)
-                                    PopupMenuItem(
-                                      value: 'move:${target.id}',
-                                      child: ListTile(
-                                        leading: Icon(Icons.arrow_forward,
-                                            color: _stageColors[target]),
-                                        title: Text(
-                                            'Transférer vers ${target.label}'),
-                                      ),
-                                    ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: ListTile(
-                                      leading: Icon(Icons.delete_outline),
-                                      title: Text('Supprimer'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        FolderScreen(folder: folder),
-                                  ),
-                                );
-                                _refresh();
-                              },
-                            );
-                          },
-                        ),
                       ),
           ),
         ],

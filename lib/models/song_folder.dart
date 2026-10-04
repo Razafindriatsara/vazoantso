@@ -44,6 +44,7 @@ enum SongStage {
         voaboatra => const [SongStage.manamasaka],
         manamasaka => const [SongStage.hiravavaka, SongStage.alahamohamo],
         hiravavaka || alahamohamo => const [SongStage.alitara, SongStage.lapihazo],
+        alitara || lapihazo => const [SongStage.hiravavaka, SongStage.alahamohamo],
         _ => const [],
       };
 
@@ -59,10 +60,14 @@ class SongFolder {
     required this.title,
     required this.files,
     this.stage = SongStage.vinavina,
+    this.order,
   });
 
   final String title;
   final SongStage stage;
+
+  /// Rang d'interprétation sur scène (Alitara / Lapihazo), à partir de 1.
+  final int? order;
 
   /// suffixe de l'emplacement -> nom de fichier affiché.
   final Map<String, String> files;

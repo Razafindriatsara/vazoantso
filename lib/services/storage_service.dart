@@ -31,6 +31,7 @@ class StorageService {
       title: title,
       files: files,
       stage: SongStage.fromId(data?['stage'] as String?),
+      order: (data?['order'] as num?)?.toInt(),
     );
     _cache[title] = folder;
     return folder;
@@ -53,8 +54,13 @@ class StorageService {
         .where((f) => q.isEmpty || f.title.toLowerCase().contains(q))
         .where((f) => stage == null || f.stage == stage)
         .toList()
-      ..sort(
-          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      ..sort((a, b) {
+        if (stage != null && stage.isSehosehatra) {
+          final byOrder = (a.order ?? 1 << 30).compareTo(b.order ?? 1 << 30);
+          if (byOrder != 0) return byOrder;
+        }
+        return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      });
     return list;
   }
 
@@ -70,13 +76,42 @@ class StorageService {
     return _fromData(clean, {'files': {}, 'stage': stage.id});
   }
 
-  /// Change l'étape d'un chant (vinavina -> voaboatra -> manamasaka).
+  /// Change l'étape d'un chant (vinavina -> voaboatra -> manamasaka ->
+  /// playliste <-> Alitara / Lapihazo). Dans Alitara / Lapihazo le chant
+  /// est placé en dernière position, ailleurs son rang est supprimé.
   Future<SongFolder> moveToStage(SongFolder folder, SongStage stage) async {
-    await _folders
-        .doc(folder.title)
-        .set({'stage': stage.id}, SetOptions(merge: true));
+    final update = <String, dynamic>{'stage': stage.id};
+    if (stage.isSehosehatra) {
+      final peers = await listFolders(stage: stage);
+      var last = 0;
+      for (var i = 0; i < peers.length; i++) {
+        final rank = peers[i].order ?? i + 1;
+        if (rank > last) last = rank;
+      }
+      update['order'] = last + 1;
+    } else {
+      update['order'] = FieldValue.delete();
+    }
+    await _folders.doc(folder.title).set(update, SetOptions(merge: true));
     final data = await _folderData(folder.title);
     return _fromData(folder.title, data);
+  }
+
+  /// Enregistre l'ordre d'interprétation : rang 1, 2, 3… selon la liste.
+  Future<List<SongFolder>> saveOrder(List<SongFolder> ordered) async {
+    final batch = _db.batch();
+    for (var i = 0; i < ordered.length; i++) {
+      batch.update(_folders.doc(ordered[i].title), {'order': i + 1});
+    }
+    await batch.commit();
+    return [
+      for (var i = 0; i < ordered.length; i++)
+        _fromData(ordered[i].title, {
+          'files': ordered[i].files,
+          'stage': ordered[i].stage.id,
+          'order': i + 1,
+        }),
+    ];
   }
 
   Future<void> _deleteChunks(String title, String suffix, int count) async {
@@ -129,10 +164,12 @@ class StorageService {
       'files': newFiles,
       'chunks': chunks,
       'stage': (data['stage'] as String?) ?? folder.stage.id,
+      if (data['order'] != null) 'order': data['order'],
     });
     await _folders.doc(folder.title).delete();
     _cache.remove(folder.title);
-    return _fromData(clean, {'files': newFiles, 'stage': data['stage']});
+    return _fromData(clean,
+        {'files': newFiles, 'stage': data['stage'], 'order': data['order']});
   }
 
   /// Importe un fichier dans un emplacement. Remplace l'existant.
@@ -204,8 +241,17 @@ class StorageService {
     final stage = (data['stage'] as String?) ?? folder.stage.id;
     await _folders
         .doc(folder.title)
-        .set({'files': files, 'chunks': chunks, 'stage': stage});
-    return _fromData(
-        folder.title, {'files': files, 'chunks': chunks, 'stage': stage});
+        .set({
+      'files': files,
+      'chunks': chunks,
+      'stage': stage,
+      if (data['order'] != null) 'order': data['order'],
+    });
+    return _fromData(folder.title, {
+      'files': files,
+      'chunks': chunks,
+      'stage': stage,
+      'order': data['order'],
+    });
   }
 }
