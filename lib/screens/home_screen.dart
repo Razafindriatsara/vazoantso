@@ -442,12 +442,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _reorderable
                             ? ReorderableListView.builder(
                                 buildDefaultDragHandles: false,
+                                padding: const EdgeInsets.only(bottom: 88),
                                 itemCount: _folders.length,
                                 onReorder: _reorder,
                                 itemBuilder: (context, i) =>
                                     _folderTile(_folders[i], i),
                               )
                             : ListView.builder(
+                                padding: const EdgeInsets.only(bottom: 88),
                                 itemCount: _folders.length,
                                 itemBuilder: (context, i) =>
                                     _folderTile(_folders[i], i),
@@ -456,6 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addFolder,
         backgroundColor: _color,
